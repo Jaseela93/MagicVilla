@@ -17,7 +17,7 @@ namespace MagicVilla_VillaAPI.Controllers
             return Ok(VillaStore.villaList);
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id:int}" , Name = "GetVilla")]
        // [ProducesResponseType(200)]
         //[ProducesResponseType(404)]
        // [ProducesResponseType(400)]
@@ -30,6 +30,59 @@ namespace MagicVilla_VillaAPI.Controllers
             var villa = VillaStore.villaList.FirstOrDefault(u => u.Id == id);
             if(villa == null) { return NotFound(); }
             return Ok(villa);
+        }
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult<VillaDTo> CreateVilla([FromBody]VillaDTo villaDTo)
+        {
+            //if(!ModelState.IsValid)
+            //{
+            //    return BadRequest(ModelState);
+            //}
+
+            if (VillaStore.villaList.FirstOrDefault(u => u.Name.ToLower() == villaDTo.Name.ToLower()) != null)
+                {
+                ModelState.AddModelError("CustomError", "Villa already Exist !!");
+                return BadRequest(ModelState);
+            }
+
+            if(villaDTo == null) 
+            {
+                return BadRequest(villaDTo);
+            }
+            if(villaDTo.Id >0)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            villaDTo.Id=VillaStore.villaList.OrderByDescending(u=>u.Id).FirstOrDefault().Id+1;
+            VillaStore.villaList.Add(villaDTo);
+            return CreatedAtRoute("GetVilla", new { id = villaDTo.Id }, villaDTo);
+            // return Ok(villaDTo);
+
+        }
+
+        [HttpDelete("{id:int}", Name = "DeleteVilla")]
+
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult DeleteVilla(int id)
+        {
+            if(id==0)
+            {
+                return BadRequest();
+            }
+            var villa = VillaStore.villaList.FirstOrDefault(u=>u.Id==id);
+            if(villa== null) {
+                return NotFound();
+            }
+            VillaStore.villaList.Remove(villa);
+            return NoContent();
+
         }
     }
 }
